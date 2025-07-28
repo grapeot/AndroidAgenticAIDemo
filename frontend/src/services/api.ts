@@ -34,6 +34,9 @@ export class ChatAPI {
 
     const startStreaming = async () => {
       try {
+        console.log('🔄 Starting streaming connection to:', `${API_BASE_URL}/chat/stream`);
+        console.log('📤 Request payload:', request);
+        
         const response = await fetch(`${API_BASE_URL}/chat/stream`, {
           method: 'POST',
           headers: {
@@ -43,8 +46,12 @@ export class ChatAPI {
           signal: abortController.signal,
         });
 
+        console.log('📡 Response status:', response.status, response.statusText);
+        
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          console.error('❌ HTTP error response:', errorText);
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
 
         const reader = response.body?.getReader();
@@ -63,25 +70,30 @@ export class ChatAPI {
           }
 
           const chunk = decoder.decode(value, { stream: true });
+          console.log('📦 Received chunk:', chunk);
           const lines = chunk.split('\n');
 
           for (const line of lines) {
+            console.log('🔍 Processing line:', JSON.stringify(line));
             if (line.startsWith('data: ')) {
               try {
                 const eventData = line.slice(6); // 移除 'data: ' 前缀
+                console.log('📄 Event data:', eventData);
                 if (eventData.trim()) {
                   const sseEvent: SSEEvent = JSON.parse(eventData);
+                  console.log('📨 Parsed SSE event:', sseEvent);
                   onEvent(sseEvent);
                   
                   // 如果收到 done 事件，关闭连接
                   if (sseEvent.type === 'done') {
+                    console.log('🏁 Received done event, closing connection');
                     isConnected = false;
                     onClose();
                     break;
                   }
                 }
               } catch (error) {
-                console.error('Failed to parse SSE event:', error);
+                console.error('❌ Failed to parse SSE event:', error, 'Raw line:', line);
                 // 不要因为单个解析错误而终止整个流
               }
             }
@@ -89,7 +101,7 @@ export class ChatAPI {
         }
       } catch (error) {
         if (!abortController.signal.aborted) {
-          console.error('SSE connection error:', error);
+          console.error('❌ SSE connection error:', error);
           onError(error as Error);
         }
       }
@@ -138,19 +150,23 @@ export class StreamingChatManager {
       this.stopStreaming();
     }
 
+    console.log('🚀 StreamingChatManager: Starting streaming...');
     this.closeConnection = ChatAPI.createStreamingConnection(
       request,
       this.handleSSEEvent.bind(this),
       (error) => {
+        console.error('❌ StreamingChatManager error:', error.message);
         this.handlers.onError(error.message);
         this.isConnected = false;
       },
       () => {
+        console.log('🔚 StreamingChatManager: Connection closed');
         this.isConnected = false;
       }
     );
 
     this.isConnected = true;
+    console.log('✅ StreamingChatManager: Connection established');
   }
 
   stopStreaming(): void {

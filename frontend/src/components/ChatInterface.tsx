@@ -5,8 +5,7 @@ import {
   MessageRole, 
   ConnectionStatus, 
   AppState,
-  ChatInterfaceProps,
-  ToolCall 
+  ChatInterfaceProps
 } from '../types';
 import { StreamingChatManager, SSEEventHandlers } from '../services/api';
 import MessageBubble from './MessageBubble';
@@ -25,6 +24,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = () => {
   const [currentStreamingMessage, setCurrentStreamingMessage] = useState<string>('');
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [loadingType, setLoadingType] = useState<'typing' | 'searching' | 'processing'>('typing');
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +32,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = () => {
   // 自动滚动到底部
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // 添加调试日志
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setDebugLogs(prev => {
+      const newLogs = [...prev, `[${timestamp}] ${message}`];
+      return newLogs.slice(-10); // 只保留最近10条
+    });
   };
 
   useEffect(() => {
@@ -59,9 +68,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = () => {
       },
       
       onError: (error: string) => {
+        console.error('Chat error:', error);
+        // 显示详细错误信息在界面上
+        const detailedError = `连接错误: ${error}`;
         setState(prev => ({
           ...prev,
-          error,
+          error: detailedError,
           isLoading: false,
           connectionStatus: ConnectionStatus.ERROR,
         }));
@@ -83,6 +95,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = () => {
           setState(prev => ({
             ...prev,
             messages: [...prev.messages, assistantMessage],
+            isLoading: false,
+            connectionStatus: ConnectionStatus.DISCONNECTED,
+          }));
+        } else {
+          // 如果没有收到内容，只更新状态
+          setState(prev => ({
+            ...prev,
             isLoading: false,
             connectionStatus: ConnectionStatus.DISCONNECTED,
           }));
@@ -128,16 +147,50 @@ const ChatInterface: React.FC<ChatInterfaceProps> = () => {
     setLoadingMessage('AI 正在思考...');
     setLoadingType('typing');
 
-    // 开始流式请求
-    if (streamingManager) {
-      streamingManager.startStreaming({
-        message: messageText,
-        conversation_id: state.conversationId,
-      });
-      
+    // 使用非流式请求进行测试
+    try {
       setState(prev => ({
         ...prev,
         connectionStatus: ConnectionStatus.CONNECTED,
+      }));
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: messageText, 
+          conversation_id: state.conversationId 
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
+
+      const result = await response.json();
+      
+      // 添加AI回复到消息列表
+      const assistantMessage: Message = {
+        id: uuidv4(),
+        role: MessageRole.ASSISTANT,
+        content: result.content || result.message || '收到空回复',
+        timestamp: new Date(),
+        status: 'sent',
+      };
+
+      setState(prev => ({
+        ...prev,
+        messages: [...prev.messages, assistantMessage],
+        isLoading: false,
+        connectionStatus: ConnectionStatus.DISCONNECTED,
+      }));
+
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: `发送消息失败: ${error}`,
+        isLoading: false,
+        connectionStatus: ConnectionStatus.ERROR,
       }));
     }
   };
@@ -164,6 +217,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = () => {
     setLoadingMessage('');
   };
 
+  const testConnection = async () => {
+    setState(prev => ({ ...prev, error: undefined }));
+    
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'test', conversation_id: 'test' })
+      });
+      
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          connectionStatus: ConnectionStatus.CONNECTED,
+          error: undefined
+        }));
+        setTimeout(() => {
+          setState(prev => ({ ...prev, connectionStatus: ConnectionStatus.DISCONNECTED }));
+        }, 2000);
+      } else {
+        const errorText = await response.text();
+        setState(prev => ({
+          ...prev,
+          connectionStatus: ConnectionStatus.ERROR,
+          error: `连接测试失败: ${response.status} - ${errorText}`
+        }));
+      }
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        connectionStatus: ConnectionStatus.ERROR,
+        error: `连接测试失败: ${error}`
+      }));
+    }
+  };
+
   return (
     <div style={styles.container}>
       {/* 标题栏 */}
@@ -172,11 +261,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = () => {
         <div style={styles.status}>
           <span style={{
             ...styles.statusDot,
-            backgroundColor: state.connectionStatus === ConnectionStatus.CONNECTED ? '#4CAF50' : '#ccc'
+            backgroundColor: state.connectionStatus === ConnectionStatus.CONNECTED ? '#4CAF50' : 
+                           state.connectionStatus === ConnectionStatus.ERROR ? '#f44336' : '#ccc'
           }} />
           <span style={styles.statusText}>
-            {state.connectionStatus === ConnectionStatus.CONNECTED ? '已连接' : '未连接'}
+            {state.connectionStatus === ConnectionStatus.CONNECTED ? '已连接' : 
+             state.connectionStatus === ConnectionStatus.ERROR ? '连接错误' : '未连接'}
           </span>
+          <button 
+            onClick={testConnection}
+            style={styles.testButton}
+          >
+            测试连接
+          </button>
         </div>
       </div>
 
@@ -363,6 +460,17 @@ const styles = {
     borderRadius: '12px',
     fontSize: '14px',
     textAlign: 'center',
+  } as React.CSSProperties,
+
+  testButton: {
+    marginLeft: '8px',
+    padding: '4px 8px',
+    fontSize: '12px',
+    backgroundColor: '#f0f0f0',
+    color: '#666',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    cursor: 'pointer',
   } as React.CSSProperties,
 };
 
