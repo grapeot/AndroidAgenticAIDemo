@@ -3,8 +3,8 @@ import json
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from models.schemas import ChatRequest, ChatResponse, SSEEvent, SSEEventType
-from services.openai_service import OpenAIService
+from backend.models.schemas import ChatRequest, ChatResponse, SSEEvent, SSEEventType
+from backend.services.openai_service import OpenAIService
 
 app = FastAPI(title="AI Chat System", version="1.0.0")
 

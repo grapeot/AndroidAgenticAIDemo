@@ -2,7 +2,7 @@ import os
 import json
 from typing import List, Dict, Any, AsyncGenerator
 from openai import OpenAI
-from .tavily_service import TavilyService
+from backend.services.tavily_service import TavilyService
 
 class OpenAIService:
     def __init__(self):
