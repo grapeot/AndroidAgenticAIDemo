@@ -6,11 +6,11 @@ from backend.services.tavily_service import TavilyService
 
 class OpenAIService:
     def __init__(self):
-        self.api_key = os.environ.get('OPENAI_API_KEY')
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
-        
-        self.client = OpenAI(api_key=self.api_key)
+        # 使用 Ollama 本地服务
+        self.client = OpenAI(
+            base_url="http://localhost:11434/v1",
+            api_key="ollama"  # Ollama 不需要真实的 API key，只需要一个占位符
+        )
         self.tavily_service = TavilyService()
         
         # 系统提示词
@@ -33,9 +33,9 @@ class OpenAIService:
         tool_calls_made = []
         
         try:
-            # 第一步：发送给 OpenAI
+            # 第一步：发送给 Ollama
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="qwen3:1.7b",
                 messages=messages,
                 tools=tools,
                 tool_choice="auto"
@@ -83,7 +83,7 @@ class OpenAIService:
                 
                 # 获取最终回复
                 final_response = self.client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="qwen3:1.7b",
                     messages=messages
                 )
                 
@@ -113,9 +113,9 @@ class OpenAIService:
         try:
             yield {"type": "status", "content": "正在理解您的问题..."}
             
-            # 第一步：发送给 OpenAI
+            # 第一步：发送给 Ollama
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="qwen3:1.7b",
                 messages=messages,
                 tools=tools,
                 tool_choice="auto"
@@ -175,7 +175,7 @@ class OpenAIService:
                 
                 # 获取流式最终回复
                 final_stream = self.client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="qwen3:1.7b",
                     messages=messages,
                     stream=True
                 )
@@ -191,7 +191,7 @@ class OpenAIService:
                 yield {"type": "status", "content": "正在生成回复..."}
                 
                 stream = self.client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="qwen3:1.7b",
                     messages=messages,
                     stream=True
                 )
