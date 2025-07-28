@@ -12,7 +12,7 @@ import sys
 from typing import Dict, Any
 
 # API 基础 URL
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8081"
 
 def test_server_health():
     """测试服务器健康状态"""
