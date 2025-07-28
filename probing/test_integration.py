@@ -10,13 +10,13 @@ import json
 from openai import OpenAI
 from tavily import TavilyClient
 
-def create_tavily_tool_definition():
-    """创建 Tavily 搜索工具的定义"""
+def create_search_tool_definition():
+    """创建简化的搜索工具定义"""
     return {
         "type": "function",
         "function": {
-            "name": "tavily_search",
-            "description": "使用 Tavily 搜索引擎搜索实时信息。当用户询问最新新闻、天气、股价、体育赛事结果等需要实时信息的问题时使用此工具。",
+            "name": "search",
+            "description": "搜索实时信息。当用户询问最新新闻、天气、股价、体育赛事结果等需要实时信息的问题时使用此工具。",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -24,18 +24,12 @@ def create_tavily_tool_definition():
                         "type": "string",
                         "description": "搜索查询字符串"
                     },
-                    "search_type": {
-                        "type": "string",
-                        "enum": ["basic", "qna", "context"],
-                        "description": "搜索类型：basic=基本搜索，qna=问答搜索，context=上下文搜索",
-                        "default": "basic"
-                    },
                     "max_results": {
                         "type": "integer",
                         "description": "最大结果数量",
                         "minimum": 1,
                         "maximum": 10,
-                        "default": 3
+                        "default": 5
                     }
                 },
                 "required": ["query"]
@@ -43,52 +37,32 @@ def create_tavily_tool_definition():
         }
     }
 
-def execute_tavily_search(tavily_client, query, search_type="basic", max_results=3):
-    """执行 Tavily 搜索"""
+def execute_search(tavily_client, query, max_results=5):
+    """执行简化的搜索功能"""
     try:
-        if search_type == "qna":
-            # Q&A 搜索
-            result = tavily_client.qna_search(query=query)
-            return {
-                "success": True,
-                "search_type": "qna",
-                "query": query,
-                "answer": result
-            }
-        elif search_type == "context":
-            # 上下文搜索
-            context = tavily_client.get_search_context(query=query, max_results=max_results)
-            return {
-                "success": True,
-                "search_type": "context",
-                "query": query,
-                "context": context[:1000] + "..." if len(context) > 1000 else context
-            }
-        else:
-            # 基本搜索
-            response = tavily_client.search(
-                query=query,
-                max_results=max_results,
-                include_raw_content=False
-            )
-            
-            # 格式化结果
-            formatted_results = []
-            for result in response.get('results', []):
-                formatted_results.append({
-                    "title": result.get('title', ''),
-                    "url": result.get('url', ''),
-                    "content": result.get('content', '')[:300] + "..." if len(result.get('content', '')) > 300 else result.get('content', ''),
-                    "score": result.get('score', 0)
-                })
-            
-            return {
-                "success": True,
-                "search_type": "basic",
-                "query": query,
-                "results_count": len(formatted_results),
-                "results": formatted_results
-            }
+        # 只使用基本搜索
+        response = tavily_client.search(
+            query=query,
+            max_results=max_results,
+            include_raw_content=False
+        )
+        
+        # 格式化结果
+        formatted_results = []
+        for result in response.get('results', []):
+            formatted_results.append({
+                "title": result.get('title', ''),
+                "url": result.get('url', ''),
+                "content": result.get('content', '')[:300] + "..." if len(result.get('content', '')) > 300 else result.get('content', ''),
+                "score": result.get('score', 0)
+            })
+        
+        return {
+            "success": True,
+            "query": query,
+            "results_count": len(formatted_results),
+            "results": formatted_results
+        }
             
     except Exception as e:
         return {
@@ -118,7 +92,7 @@ def test_function_calling_integration():
         print("✓ 客户端初始化成功")
         
         # 创建工具定义
-        tools = [create_tavily_tool_definition()]
+        tools = [create_search_tool_definition()]
         print("✓ 工具定义创建成功")
         
         # 测试查询
@@ -130,7 +104,7 @@ def test_function_calling_integration():
         print("\n步骤 1: 发送问题给 OpenAI...")
         
         messages = [
-            {"role": "system", "content": "你是一个智能助手。当用户询问需要实时信息的问题时，使用 tavily_search 工具来获取最新信息。"},
+            {"role": "system", "content": "你是一个智能助手。当用户询问需要实时信息的问题时，使用 search 工具来获取最新信息。"},
             {"role": "user", "content": test_query}
         ]
         
@@ -174,19 +148,18 @@ def test_function_calling_integration():
                 print(f"- 函数名：{function_name}")
                 print(f"- 参数：{json.dumps(function_args, ensure_ascii=False, indent=2)}")
                 
-                if function_name == "tavily_search":
-                    print(f"\n步骤 3: 执行 Tavily 搜索...")
+                if function_name == "search":
+                    print(f"\n步骤 3: 执行搜索...")
                     
                     # 执行搜索
-                    search_result = execute_tavily_search(
+                    search_result = execute_search(
                         tavily_client,
                         function_args.get("query"),
-                        function_args.get("search_type", "basic"),
-                        function_args.get("max_results", 3)
+                        function_args.get("max_results", 5)
                     )
                     
                     if search_result["success"]:
-                        print("✓ Tavily 搜索成功")
+                        print("✓ 搜索成功")
                         
                         # 将搜索结果添加到消息中
                         messages.append({
@@ -237,7 +210,7 @@ def test_multiple_queries():
     
     openai_client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
     tavily_client = TavilyClient(api_key=os.environ.get('TAVILY_API_KEY'))
-    tools = [create_tavily_tool_definition()]
+    tools = [create_search_tool_definition()]
     
     successful_tests = 0
     
@@ -247,7 +220,7 @@ def test_multiple_queries():
         
         try:
             messages = [
-                {"role": "system", "content": "你是一个智能助手。当用户询问需要实时信息的问题时，使用 tavily_search 工具来获取最新信息。请简洁地回答用户的问题。"},
+                {"role": "system", "content": "你是一个智能助手。当用户询问需要实时信息的问题时，使用 search 工具来获取最新信息。请简洁地回答用户的问题。"},
                 {"role": "user", "content": query}
             ]
             
@@ -264,21 +237,16 @@ def test_multiple_queries():
             if assistant_message.tool_calls:
                 # 执行工具调用
                 for tool_call in assistant_message.tool_calls:
-                    if tool_call.function.name == "tavily_search":
+                    if tool_call.function.name == "search":
                         function_args = json.loads(tool_call.function.arguments)
-                        search_result = execute_tavily_search(
+                        search_result = execute_search(
                             tavily_client,
                             function_args.get("query"),
-                            function_args.get("search_type", "qna"),  # 使用 QnA 获得更简洁的答案
-                            function_args.get("max_results", 3)
+                            function_args.get("max_results", 5)
                         )
                         
                         if search_result["success"]:
-                            if search_result["search_type"] == "qna":
-                                print(f"答案：{search_result['answer']}")
-                            else:
-                                print(f"找到 {search_result['results_count']} 个相关结果")
-                            
+                            print(f"找到 {search_result['results_count']} 个相关结果")
                             successful_tests += 1
                         else:
                             print(f"搜索失败：{search_result['error']}")
