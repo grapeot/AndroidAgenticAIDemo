@@ -12,7 +12,7 @@
 - **后端**: FastAPI
 - **前端**: React
 - **实时通信**: Server-Sent Events (SSE)
-- **AI**: OpenAI API (GPT-4-mini)
+- **AI**: OpenAI API (GPT-4.1-mini)
 - **搜索**: Tavily API
 
 ## 项目结构
