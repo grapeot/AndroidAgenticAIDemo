@@ -62,15 +62,15 @@
 # 创建验证目录
 mkdir probing
 
-# 创建环境配置文件
-cat > .env << EOF
-OPENAI_API_KEY=your_openai_api_key
-TAVILY_API_KEY=your_tavily_api_key
-EOF
-
-# 安装依赖
-pip install openai tavily-python python-dotenv
+# 安装依赖（使用 uv）
+uv pip install openai tavily-python
 ```
+
+**注意**：API Keys 已在系统环境变量中配置：
+- `OPENAI_API_KEY` - OpenAI API 密钥
+- `TAVILY_API_KEY` - Tavily API 密钥
+
+代码中直接使用 `os.environ` 读取即可。
 
 ## 预期产出
 
