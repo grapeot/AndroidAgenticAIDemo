@@ -1,0 +1,32 @@
+# Core Dependencies
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+
+# OpenAI Integration
+openai==1.10.0
+
+# Tavily Search Integration
+tavily-python==0.3.0
+
+# HTTP Client
+httpx==0.26.0
+
+# CORS Support
+python-multipart==0.0.6
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# SSE Support
+sse-starlette==1.8.2
+
+# Development Tools
+pytest==7.4.4
+pytest-asyncio==0.23.3
+
+# Optional: For better logging
+loguru==0.7.2
+
+# Optional: For conversation storage (if needed)
+aiosqlite==0.19.0
