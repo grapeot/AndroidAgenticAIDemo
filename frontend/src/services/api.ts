@@ -22,44 +22,86 @@ export class ChatAPI {
     return response.json();
   }
 
-  // 流式聊天 API
+  // 流式聊天 API - 使用 fetch 实现 POST SSE
   static createStreamingConnection(
     request: ChatRequest,
     onEvent: (event: SSEEvent) => void,
     onError: (error: Error) => void,
     onClose: () => void
   ): () => void {
-    // 创建 EventSource 连接
-    const eventSource = new EventSource(
-      `${API_BASE_URL}/chat/stream?${new URLSearchParams({
-        message: request.message,
-        ...(request.conversation_id && { conversation_id: request.conversation_id })
-      })}`
-    );
+    let abortController = new AbortController();
+    let isConnected = true;
 
-    eventSource.onmessage = (event) => {
+    const startStreaming = async () => {
       try {
-        const sseEvent: SSEEvent = JSON.parse(event.data);
-        onEvent(sseEvent);
+        const response = await fetch(`${API_BASE_URL}/chat/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(request),
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          throw new Error('Failed to get response reader');
+        }
+
+        while (isConnected) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            onClose();
+            break;
+          }
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const eventData = line.slice(6); // 移除 'data: ' 前缀
+                if (eventData.trim()) {
+                  const sseEvent: SSEEvent = JSON.parse(eventData);
+                  onEvent(sseEvent);
+                  
+                  // 如果收到 done 事件，关闭连接
+                  if (sseEvent.type === 'done') {
+                    isConnected = false;
+                    onClose();
+                    break;
+                  }
+                }
+              } catch (error) {
+                console.error('Failed to parse SSE event:', error);
+                // 不要因为单个解析错误而终止整个流
+              }
+            }
+          }
+        }
       } catch (error) {
-        console.error('Failed to parse SSE event:', error);
-        onError(new Error('Failed to parse server response'));
+        if (!abortController.signal.aborted) {
+          console.error('SSE connection error:', error);
+          onError(error as Error);
+        }
       }
     };
 
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-      onError(new Error('Connection error'));
-    };
-
-    eventSource.addEventListener('close', () => {
-      eventSource.close();
-      onClose();
-    });
+    // 开始流式连接
+    startStreaming();
 
     // 返回关闭连接的函数
     return () => {
-      eventSource.close();
+      isConnected = false;
+      abortController.abort();
     };
   }
 
