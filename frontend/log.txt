@@ -1,0 +1,175 @@
+
+> ai-chat-frontend@1.0.0 start
+> react-scripts start
+
+(node:15711) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:15711) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(node:15711) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled with warnings.
+
+[eslint] 
+src/components/ChatInterface.tsx
+  Line 9:3:  'ToolCall' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/ChatInterface.tsx
+  Line 9:3:  'ToolCall' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+Watchpack Error (watcher): Error: EACCES: permission denied, watch '/data/data'
+Watchpack Error (watcher): Error: EACCES: permission denied, watch '/data'
+Watchpack Error (watcher): Error: EACCES: permission denied, watch '/'
+Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/data/data'
+Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/data'
+Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/'
+No issues found.
+Compiled with warnings.
+
+[eslint] 
+src/components/ChatInterface.tsx
+  Line 9:3:  'ToolCall' is defined but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/ChatInterface.tsx
+  Line 9:3:  'ToolCall' is defined but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+(node:15711) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+No issues found.
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+No issues found.
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+ERROR in src/components/ChatInterface.tsx:194:22
+TS2304: Cannot find name 'testConnection'.
+    192 |           </span>
+    193 |           <button 
+  > 194 |             onClick={testConnection}
+        |                      ^^^^^^^^^^^^^^
+    195 |             style={styles.testButton}
+    196 |           >
+    197 |             测试连接
+
+ERROR in src/components/ChatInterface.tsx:195:27
+TS2551: Property 'testButton' does not exist on type '{ container: CSSProperties; header: CSSProperties; title: CSSProperties; status: CSSProperties; statusDot: CSSProperties; ... 9 more ...; errorMessage: CSSProperties; }'. Did you mean 'stopButton'?
+    193 |           <button 
+    194 |             onClick={testConnection}
+  > 195 |             style={styles.testButton}
+        |                           ^^^^^^^^^^
+    196 |           >
+    197 |             测试连接
+    198 |           </button>
+
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+ERROR in src/components/ChatInterface.tsx:231:27
+TS2551: Property 'testButton' does not exist on type '{ container: CSSProperties; header: CSSProperties; title: CSSProperties; status: CSSProperties; statusDot: CSSProperties; ... 9 more ...; errorMessage: CSSProperties; }'. Did you mean 'stopButton'?
+    229 |           <button 
+    230 |             onClick={testConnection}
+  > 231 |             style={styles.testButton}
+        |                           ^^^^^^^^^^
+    232 |           >
+    233 |             测试连接
+    234 |           </button>
+
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+No issues found.
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+No issues found.
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+No issues found.
+Compiling...
+Compiled successfully!
+webpack compiled successfully
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/ChatInterface.tsx
+  Line 27:10:  'debugLogs' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  Line 27:21:  'setDebugLogs' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/ChatInterface.tsx
+  Line 27:10:  'debugLogs' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  Line 27:21:  'setDebugLogs' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/ChatInterface.tsx
+  Line 27:10:  'debugLogs' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  Line 38:9:   'addDebugLog' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/ChatInterface.tsx
+  Line 27:10:  'debugLogs' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  Line 38:9:   'addDebugLog' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/ChatInterface.tsx
+  Line 27:10:  'debugLogs' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  Line 38:9:   'addDebugLog' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/ChatInterface.tsx
+  Line 27:10:  'debugLogs' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  Line 38:9:   'addDebugLog' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/ChatInterface.tsx
+  Line 27:10:  'debugLogs' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  Line 38:9:   'addDebugLog' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/ChatInterface.tsx
+  Line 27:10:  'debugLogs' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  Line 38:9:   'addDebugLog' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+webpack compiled with 1 warning
+No issues found.

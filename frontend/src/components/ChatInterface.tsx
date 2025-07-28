@@ -173,7 +173,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = () => {
       const assistantMessage: Message = {
         id: uuidv4(),
         role: MessageRole.ASSISTANT,
-        content: result.content || result.message || '收到空回复',
+        content: result.response || result.content || result.message || '收到空回复',
         timestamp: new Date(),
         status: 'sent',
       };
