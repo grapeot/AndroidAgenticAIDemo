@@ -38,7 +38,6 @@ ai-chat-system/
 │   │   └── services/
 │   │       └── api.js       # SSE 客户端
 │   └── public/
-├── .env.example             # 环境变量示例
 └── README.md
 ```
 
@@ -107,11 +106,11 @@ data: {"type": "done"}
 
 ## 环境配置
 
-创建 `.env` 文件：
-```
-OPENAI_API_KEY=your_openai_api_key
-TAVILY_API_KEY=your_tavily_api_key
-```
+API Keys 已在系统环境变量中配置：
+- `OPENAI_API_KEY` - OpenAI API 密钥
+- `TAVILY_API_KEY` - Tavily API 密钥
+
+代码中直接使用 `os.environ` 读取即可。
 
 ## 开发命令
 
