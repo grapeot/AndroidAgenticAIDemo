@@ -70,22 +70,195 @@ ai-chat-system/
 - [ ] 性能优化
 - [ ] 部署文档和脚本
 
-## 核心实现细节
+## 核心数据结构
 
-### 后端 API 设计
+### 后端数据模型 (schemas.py)
 
 ```python
-# POST /chat - 发送消息
-{
-    "message": "今天北京的天气如何？"
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+from enum import Enum
+
+# 消息角色枚举
+class MessageRole(str, Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+
+# 聊天消息
+class Message(BaseModel):
+    role: MessageRole
+    content: str
+    timestamp: Optional[str] = None
+
+# 工具调用
+class ToolCall(BaseModel):
+    id: str
+    type: str = "function"
+    function: Dict[str, Any]  # {"name": "tavily_search", "arguments": "{\"query\": \"北京天气\"}"}
+
+# SSE 事件类型
+class SSEEventType(str, Enum):
+    STATUS = "status"
+    TOOL_CALL = "tool_call"
+    CONTENT = "content"
+    ERROR = "error"
+    DONE = "done"
+
+# SSE 事件
+class SSEEvent(BaseModel):
+    type: SSEEventType
+    content: Optional[str] = None
+    tool_name: Optional[str] = None
+    tool_args: Optional[Dict[str, Any]] = None
+
+# API 请求响应
+class ChatRequest(BaseModel):
+    message: str
+    conversation_id: Optional[str] = None
+
+class ChatResponse(BaseModel):
+    response: str
+    conversation_id: str
+    tool_calls_made: Optional[List[str]] = None
+```
+
+### 前端数据结构 (TypeScript)
+
+```typescript
+// types.ts
+export enum MessageRole {
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  SYSTEM = 'system'
 }
 
-# GET /chat/stream - SSE 流式响应
-# 返回格式：
-data: {"type": "status", "content": "正在搜索..."}
-data: {"type": "tool_call", "tool": "tavily_search", "query": "北京天气"}
-data: {"type": "content", "content": "根据搜索结果，北京今天..."}
+export interface Message {
+  id: string;
+  role: MessageRole;
+  content: string;
+  timestamp: Date;
+  status?: 'sending' | 'sent' | 'error';
+  toolCalls?: ToolCall[];
+}
+
+export interface ToolCall {
+  name: string;
+  args: Record<string, any>;
+  result?: any;
+}
+
+export enum SSEEventType {
+  STATUS = 'status',
+  TOOL_CALL = 'tool_call',
+  CONTENT = 'content',
+  ERROR = 'error',
+  DONE = 'done'
+}
+
+export interface SSEEvent {
+  type: SSEEventType;
+  content?: string;
+  tool_name?: string;
+  tool_args?: Record<string, any>;
+}
+```
+
+## 核心接口定义
+
+### REST API 接口
+
+#### 1. 发送消息 (非流式)
+```
+POST /api/chat
+Content-Type: application/json
+
+Request:
+{
+    "message": "今天北京的天气如何？",
+    "conversation_id": "optional-uuid"
+}
+
+Response:
+{
+    "response": "根据最新搜索结果，北京今天...",
+    "conversation_id": "uuid",
+    "tool_calls_made": ["tavily_search"]
+}
+```
+
+#### 2. 流式聊天
+```
+POST /api/chat/stream
+Content-Type: application/json
+
+Request:
+{
+    "message": "今天北京的天气如何？",
+    "conversation_id": "optional-uuid"
+}
+
+Response: EventStream
+data: {"type": "status", "content": "正在理解您的问题..."}
+data: {"type": "status", "content": "正在搜索相关信息..."}
+data: {"type": "tool_call", "tool_name": "tavily_search", "tool_args": {"query": "北京今天天气"}}
+data: {"type": "content", "content": "根据"}
+data: {"type": "content", "content": "最新"}
+data: {"type": "content", "content": "搜索结果，"}
+data: {"type": "content", "content": "北京今天..."}
 data: {"type": "done"}
+```
+
+#### 3. 获取对话历史
+```
+GET /api/conversations/{conversation_id}
+
+Response:
+{
+    "conversation_id": "uuid",
+    "messages": [
+        {
+            "role": "user",
+            "content": "今天北京的天气如何？",
+            "timestamp": "2024-01-20T10:00:00Z"
+        },
+        {
+            "role": "assistant",
+            "content": "根据最新搜索结果...",
+            "timestamp": "2024-01-20T10:00:05Z"
+        }
+    ]
+}
+```
+
+### WebSocket 接口（备选方案）
+
+```
+WS /ws/chat
+
+// 客户端发送
+{
+    "type": "message",
+    "content": "今天北京的天气如何？"
+}
+
+// 服务端响应
+{
+    "type": "status",
+    "content": "正在搜索..."
+}
+{
+    "type": "tool_call",
+    "tool": "tavily_search",
+    "query": "北京天气"
+}
+{
+    "type": "stream",
+    "content": "根据搜索结果，北京今天..."
+}
+{
+    "type": "complete"
+}
 ```
 
 ### 工具调用流程
